@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Login {
+  id      String   @id @default(uuid())
+  usuario Usuario?
+  email   String   @unique
+  senha   String
+}
+
+model Usuario {
+  id         String      @id @default(uuid())
+  nome       String
+  cpf        String      @unique
+  contato    String
+  idEndereco String
+  funcao     String
+  login      Login       @relation(fields: [userEmail], references: [email])
+  userEmail  String      @unique
+  Locacao    Locacao[]
+  Devolucao  Devolucao[]
+
+  endereco    Endereco @relation(fields: [idEndereco], references: [id])
+  cargoFuncao Funcao   @relation(fields: [funcao], references: [cargo])
+}
+
+model Endereco {
+  id          String    @id @default(uuid())
+  logradouro  String
+  complemento String
+  numero      String
+  bairro      String
+  cidade      String
+  cep         String
+  Usuario     Usuario[]
+  Cliente     Cliente[]
+}
+
+model Funcao {
+  id      String    @id @default(uuid())
+  cargo   String    @unique
+  Usuario Usuario[]
+}
+
+model Cliente {
+  id           String      @id @default(uuid())
+  nome         String
+  cpf          String      @unique
+  contato      String
+  email        String      @unique
+  idEndereco   String
+  numeroCNH    String
+  categoriaCNH String
+  emissaoCNH   DateTime
+  Locacao      Locacao[]
+  Devolucao    Devolucao[]
+
+  endereco Endereco @relation(fields: [idEndereco], references: [id])
+}
+
+model Carro {
+  id          String      @id @default(uuid())
+  modelo      String
+  marca       String
+  ano         String
+  placa       String
+  chassi      String
+  idTipoCarro String
+  idStatus    String
+  Locacao     Locacao[]
+  Devolucao   Devolucao[]
+
+  tipoCarro   TipoCarro   @relation(fields: [idTipoCarro], references: [id])
+  statusCarro StatusCarro @relation(fields: [idStatus], references: [id])
+}
+
+model Locacao {
+  id            String     @id @default(uuid())
+  data          DateTime   @default(now())
+  idCarro       String
+  idCliente     String
+  idUsuario     String
+  entregar      DateTime
+  seguro        Boolean
+  valor         Float
+  idOpPagamento String
+  devolucao     Devolucao?
+
+  carro       Carro       @relation(fields: [idCarro], references: [id])
+  cliente     Cliente     @relation(fields: [idCliente], references: [id])
+  usuario     Usuario     @relation(fields: [idUsuario], references: [id])
+  opPagamento OpPagamento @relation(fields: [idOpPagamento], references: [id])
+}
+
+model Devolucao {
+  id            String   @id @default(uuid())
+  data          DateTime @default(now())
+  quilomeragem  Float
+  idCarro       String
+  idCliente     String
+  idUsuario     String
+  idLocacao     String   @unique
+  Danos         Danos[]
+  Taxas         Taxas[]
+  idOpPagamento String
+
+  locacao     Locacao     @relation(fields: [idLocacao], references: [id])
+  carro       Carro       @relation(fields: [idCarro], references: [id])
+  cliente     Cliente     @relation(fields: [idCliente], references: [id])
+  usuario     Usuario     @relation(fields: [idUsuario], references: [id])
+  opPagamento OpPagamento @relation(fields: [idOpPagamento], references: [id])
+}
+
+model OpPagamento {
+  id        String      @id @default(uuid())
+  descricao String
+  Devolucao Devolucao[]
+  Locacao   Locacao[]
+}
+
+model Danos {
+  id          String @id @default(uuid())
+  descricao   String
+  pecas       String
+  valor       Float
+  imagem      String
+  idDevolucao String
+
+  devolucao Devolucao @relation(fields: [idDevolucao], references: [id])
+}
+
+model Taxas {
+  id          String  @id @default(uuid())
+  tanqueCheio Boolean
+  lavado      Boolean
+  valor       Float
+  idDevolucao String
+
+  devolucao Devolucao @relation(fields: [idDevolucao], references: [id])
+}
+
+model StatusCarro {
+  id        String  @id @default(uuid())
+  descricao String
+  Carro     Carro[]
+}
+
+model TipoCarro {
+  id        String  @id @default(uuid())
+  descricao String
+  valor     Float
+  Carro     Carro[]
+  // Estoque   Estoque[]
+
+  // NÃO PRECISA DE ESTOQUE, ELE VAI CADASTRAR OS CARROS
+}
+
+// model Estoque {
+//   id          String @id @default(uuid())
+//   tipoCarroId String
+//   quantidade  Int
+
+//   tipoCarro TipoCarro @relation(fields: [tipoCarroId], references: [id])
+// }
